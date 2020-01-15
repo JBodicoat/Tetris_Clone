@@ -113,6 +113,8 @@ void Game::Setup_Game(void)
 	m_console_manager.Print("RIGHT - Move right", { m_dropzone_width + 2, 6 });
 	m_console_manager.Print("DOWN - Move down", { m_dropzone_width + 2, 7 });
 	m_console_manager.Print("SPACE - Drop shape", { m_dropzone_width + 2, 8 });
+
+	m_userQuit = false;
 }
 
 void Game::Get_Input(void)
@@ -163,7 +165,7 @@ void Game::Get_Input(void)
 				}
 				break;
 
-				// Z KEY
+			// Z KEY
 			case 0x5A:
 			{
 				bool rotate_clockwise{ false };
@@ -199,6 +201,7 @@ void Game::Get_Input(void)
 
 			case VK_ESCAPE:
 				// Exit to menu
+				m_userQuit = true;
 				m_is_game_running = false;
 				break;
 			}
@@ -229,7 +232,7 @@ void Game::Update(void)
 			}
 		}
 
-		m_elapsed_time = (std::clock() - m_turn_start_time) / static_cast<double>(CLOCKS_PER_SEC);
+		m_elapsed_time = static_cast<double>((std::clock() - m_turn_start_time) / CLOCKS_PER_SEC);
 		m_has_score_changed = false;
 
 		if (m_elapsed_time >= m_turn_duration)
@@ -279,7 +282,10 @@ void Game::Display(void)
 
 	if (false == m_is_game_running)
 	{
-		m_console_manager.Print("You stacked your shapes too high!", { m_dropzone_width + 2, m_dropzone_height - 1 });
+		if (!m_userQuit)
+		{
+			m_console_manager.Print("You stacked your shapes too high!", { m_dropzone_width + 2, m_dropzone_height - 1 });
+		}
 		m_console_manager.Print("Game over. Press any key to exit.", { m_dropzone_width + 2, m_dropzone_height });
 		(void)_getch();
 	}

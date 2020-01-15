@@ -60,4 +60,5 @@ protected:
 	std::clock_t m_turn_start_time;
 	double m_elapsed_time{ 0 };
 	double m_turn_duration{ 0.8 };
+	bool m_userQuit{ false };
 };
