@@ -14,6 +14,7 @@
 #include<vector>
 #include<conio.h>
 #include<Windows.h>
+#include<array>
 
 Game::Game()
 {
@@ -205,10 +206,6 @@ void Game::Get_Input(void)
 				m_is_game_running = false;
 				break;
 			}
-		}
-		else if (MOUSE_EVENT == m_console_manager.Get_Input_Record().EventType)
-		{
-
 		}
 	}
 }
@@ -406,21 +403,50 @@ void Game::Check_Rows(void)
 	{
 		m_has_score_changed = true;
 
-		// Drop the blocks above the completed row
-		for (unsigned short column{ 1 }; column < m_tile_columns.size() - 1; column++)
+		std::vector<std::array<unsigned short, 2>> top_rows; // [][0] for row number [][1] for number of completed rows connected
+
+		unsigned short top_row = completed_rows.front();
+		unsigned short connected_rows_count = 1;
+		for (unsigned short i = 0; i < completed_rows.size(); i++)
 		{
-			for (int row{ completed_rows.front() - 1 }; row > 0; row--)
+			if (i < completed_rows.size() - 1)
 			{
-				if (m_tile_columns[column][row].Get_Has_Block())
+				if (completed_rows[i] + 1 == completed_rows[i + 1])
 				{
-					Block* block = m_tile_columns[column][row].Get_Block();
-					block->Move({ 0, static_cast<int>(completed_rows.size()) });
+					++connected_rows_count;
+				}
+				else
+				{
+					top_rows.push_back({ top_row, connected_rows_count });
+					top_row = completed_rows[i + 1];
+					connected_rows_count = 1;
+				}
+			}
+			else
+			{
+				top_rows.push_back({ top_row, connected_rows_count });
+				connected_rows_count = 1;
+			}
+		}
 
-					m_tile_columns[column][row].Remove_Block();
-					m_p_changed_tiles.push_back(&m_tile_columns[column][row]);
+		// Drop the blocks above the completed row
+		for (unsigned short i{ 0 }; i < top_rows.size(); i++)
+		{
+			for (unsigned short column{ 1 }; column < m_tile_columns.size() - 1; column++)
+			{
+				for (int row{ top_rows[i][0] - 1 }; row > 0; row--)
+				{
+					if (m_tile_columns[column][row].Get_Has_Block())
+					{
+						Block* block = m_tile_columns[column][row].Get_Block();
+						block->Move({ 0, static_cast<int>(top_rows[i][1]) });
 
-					m_tile_columns[column][row + completed_rows.size()].Insert_Block(block);
-					m_p_changed_tiles.push_back(&m_tile_columns[column][row + completed_rows.size()]);
+						m_tile_columns[column][row].Remove_Block();
+						m_p_changed_tiles.push_back(&m_tile_columns[column][row]);
+
+						m_tile_columns[column][row + top_rows[i][1]].Insert_Block(block);
+						m_p_changed_tiles.push_back(&m_tile_columns[column][row + top_rows[i][1]]);
+					}
 				}
 			}
 		}
